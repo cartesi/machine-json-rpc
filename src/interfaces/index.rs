@@ -356,23 +356,21 @@ where
         &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send + 'a>> {
         let method = "";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
-    pub fn Fork<'a>(
-        &'a mut self,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Error>> + Send + 'a>> {
+    pub fn Fork<'a>(&'a self) -> Pin<Box<dyn Future<Output = Result<String, Error>> + Send + 'a>> {
         let method = "fork";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn Shutdown<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "shutdown";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
@@ -380,7 +378,7 @@ where
         &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<SemanticVersion, Error>> + Send + 'a>> {
         let method = "get_version";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
@@ -411,15 +409,15 @@ where
     }
 
     pub fn MachineDestroy<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.destroy";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineStore<'a>(
-        &'a mut self,
+        &'a self,
         directory: StringDoaGddGA,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.store";
@@ -429,7 +427,7 @@ where
     }
 
     pub fn MachineRun<'a>(
-        &'a mut self,
+        &'a self,
         mcycle_end: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<InterpreterBreakReason, Error>> + Send + 'a>> {
         let method = "machine.run";
@@ -437,9 +435,9 @@ where
         params.insert(mcycle_end).unwrap();
         self.transport.request(method, params)
     }
-    
+
     pub fn MachineRunUarch<'a>(
-        &'a mut self,
+        &'a self,
         uarch_cycle_end: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UarchInterpreterBreakReason, Error>> + Send + 'a>> {
         let method = "machine.run_uarch";
@@ -449,7 +447,7 @@ where
     }
 
     pub fn MachineStepUarch<'a>(
-        &'a mut self,
+        &'a self,
         log_type: AccessLogType,
         one_based: BooleanVyG3AETh,
     ) -> Pin<Box<dyn Future<Output = Result<AccessLog, Error>> + Send + 'a>> {
@@ -461,7 +459,7 @@ where
     }
 
     pub fn MachineVerifyAccessLog<'a>(
-        &'a mut self,
+        &'a self,
         log: AccessLog,
         runtime: MachineRuntimeConfig,
         one_based: BooleanVyG3AETh,
@@ -475,7 +473,7 @@ where
     }
 
     pub fn MachineVerifyStateTransition<'a>(
-        &'a mut self,
+        &'a self,
         root_hash_before: String,
         log: AccessLog,
         root_hash_after: String,
@@ -493,7 +491,7 @@ where
     }
 
     pub fn MachineGetProof<'a>(
-        &'a mut self,
+        &'a self,
         address: UnsignedInteger,
         log2_size: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<Proof, Error>> + Send + 'a>> {
@@ -505,15 +503,15 @@ where
     }
 
     pub fn MachineGetRootHash<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<Base64Hash, Error>> + Send + 'a>> {
         let method = "machine.get_root_hash";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineReadWord<'a>(
-        &'a mut self,
+        &'a self,
         address: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.read_word";
@@ -523,7 +521,7 @@ where
     }
 
     pub fn MachineReadMemory<'a>(
-        &'a mut self,
+        &'a self,
         address: UnsignedInteger,
         length: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<Base64String, Error>> + Send + 'a>> {
@@ -535,7 +533,7 @@ where
     }
 
     pub fn MachineWriteMemory<'a>(
-        &'a mut self,
+        &'a self,
         address: UnsignedInteger,
         data: Base64String,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
@@ -547,7 +545,7 @@ where
     }
 
     pub fn MachineReadVirtualMemory<'a>(
-        &'a mut self,
+        &'a self,
         address: UnsignedInteger,
         length: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<Base64String, Error>> + Send + 'a>> {
@@ -559,7 +557,7 @@ where
     }
 
     pub fn MachineWriteVirtualMemory<'a>(
-        &'a mut self,
+        &'a self,
         address: UnsignedInteger,
         data: Base64String,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
@@ -571,7 +569,7 @@ where
     }
 
     pub fn MachineReplaceMemoryRange<'a>(
-        &'a mut self,
+        &'a self,
         range: MemoryRangeConfig,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.replace_memory_range";
@@ -581,7 +579,7 @@ where
     }
 
     pub fn MachineReadCsr<'a>(
-        &'a mut self,
+        &'a self,
         csr: String,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.read_csr";
@@ -591,7 +589,7 @@ where
     }
 
     pub fn MachineWriteCsr<'a>(
-        &'a mut self,
+        &'a self,
         csr: String,
         value: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
@@ -603,7 +601,7 @@ where
     }
 
     pub fn MachineGetCsrAddress<'a>(
-        &'a mut self,
+        &'a self,
         csr: String,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.get_csr_address";
@@ -613,7 +611,7 @@ where
     }
 
     pub fn MachineReadX<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.read_x";
@@ -623,7 +621,7 @@ where
     }
 
     pub fn MachineReadF<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.read_f";
@@ -633,7 +631,7 @@ where
     }
 
     pub fn MachineReadUarchX<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.read_uarch_x";
@@ -643,7 +641,7 @@ where
     }
 
     pub fn MachineWriteX<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
         value: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
@@ -655,7 +653,7 @@ where
     }
 
     pub fn MachineWriteF<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
         value: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
@@ -667,7 +665,7 @@ where
     }
 
     pub fn MachineWriteUarchX<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
         value: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
@@ -679,7 +677,7 @@ where
     }
 
     pub fn MachineGetXAddress<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.get_x_address";
@@ -689,7 +687,7 @@ where
     }
 
     pub fn MachineGetFAddress<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.get_f_address";
@@ -699,7 +697,7 @@ where
     }
 
     pub fn MachineGetUarchXAddress<'a>(
-        &'a mut self,
+        &'a self,
         index: UnsignedInteger,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.get_uarch_x_address";
@@ -709,138 +707,138 @@ where
     }
 
     pub fn MachineSetIflagsY<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.set_iflags_Y";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineResetIflagsY<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.reset_iflags_Y";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineReadIflagsY<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.read_iflags_Y";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineSetIflagsX<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.set_iflags_X";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineResetIflagsX<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.reset_iflags_X";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineReadIflagsX<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.read_iflags_X";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineSetIflagsH<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.set_iflags_H";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineReadIflagsH<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.read_iflags_H";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineReadIflagsPRV<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<UnsignedInteger, Error>> + Send + 'a>> {
         let method = "machine.read_iflags_PRV";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineSetUarchHaltFlag<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.set_uarch_halt_flag";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineReadUarchHaltFlag<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.read_uarch_halt_flag";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineResetUarchState<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.reset_uarch_state";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineGetInitialConfig<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<MachineConfig, Error>> + Send + 'a>> {
         let method = "machine.get_initial_config";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineGetDefaultConfig<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<MachineConfig, Error>> + Send + 'a>> {
         let method = "machine.get_default_config";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineVerifyMerkleTree<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.verify_merkle_tree";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineVerifyDirtyPageMaps<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.verify_dirty_page_maps";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 
     pub fn MachineDumpPmas<'a>(
-        &'a mut self,
+        &'a self,
     ) -> Pin<Box<dyn Future<Output = Result<BooleanVyG3AETh, Error>> + Send + 'a>> {
         let method = "machine.dump_pmas";
-        let mut params = jsonrpsee::core::params::ArrayParams::new();
+        let params = jsonrpsee::core::params::ArrayParams::new();
         self.transport.request(method, params)
     }
 }
