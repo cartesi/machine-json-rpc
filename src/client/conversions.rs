@@ -9,8 +9,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-use crate::interfaces;
 use crate::client::*;
+use crate::interfaces;
 
 impl From<&MachineRuntimeConfig> for interfaces::MachineRuntimeConfig {
     fn from(rc: &MachineRuntimeConfig) -> Self {
@@ -18,9 +18,11 @@ impl From<&MachineRuntimeConfig> for interfaces::MachineRuntimeConfig {
             concurrency: Some(interfaces::ConcurrencyConfig {
                 update_merkle_tree: Some(rc.concurrency.update_merkle_tree),
             }),
-            htif: Some(interfaces::HTIFRuntimeConfig { no_console_putchar: rc.htif.no_console_putchar }),
+            htif: Some(interfaces::HTIFRuntimeConfig {
+                no_console_putchar: rc.htif.no_console_putchar,
+            }),
             skip_root_hash_check: Some(rc.skip_root_hash_check),
-            skip_version_check: Some(rc.skip_version_check)
+            skip_version_check: Some(rc.skip_version_check),
         }
     }
 }
@@ -40,8 +42,8 @@ impl From<&MerkleTreeProof> for interfaces::Proof {
 
 impl From<&Access> for interfaces::Access {
     fn from(access: &Access) -> Self {
-        let mut read = base64::encode(access.read_data.clone());
-        let mut written = base64::encode(access.written_data.clone());
+        let mut read = STANDARD.encode(&access.read_data);
+        let mut written = STANDARD.encode(&access.written_data);
 
         if read.ends_with("=") {
             read.push('\n');
@@ -94,8 +96,17 @@ impl From<&AccessLog> for interfaces::AccessLog {
         };
         interfaces::AccessLog {
             log_type,
-            accesses: log.accesses.iter().map(|e| interfaces::Access::from(e)).collect(),
-            brackets: Some(log.brackets.iter().map(|e| interfaces::Bracket::from(e)).collect()),
+            accesses: log
+                .accesses
+                .iter()
+                .map(|e| interfaces::Access::from(e))
+                .collect(),
+            brackets: Some(
+                log.brackets
+                    .iter()
+                    .map(|e| interfaces::Bracket::from(e))
+                    .collect(),
+            ),
             notes: Some(log.notes.clone()),
         }
     }

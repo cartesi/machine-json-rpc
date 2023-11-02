@@ -15,8 +15,9 @@
 
 use std::fmt;
 
-use serde::Deserialize;
+use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+use serde::Deserialize;
 use tokio::sync::Mutex;
 
 use crate::interfaces;
@@ -418,15 +419,11 @@ impl From<&interfaces::MachineConfig> for MachineConfig {
                     .collect()
             },
             clint: match &mc.clint {
-                Some(clint_config) => {
-                    interfaces::CLINTConfig::from(clint_config.clone())
-                }
+                Some(clint_config) => interfaces::CLINTConfig::from(clint_config.clone()),
                 None => Default::default(),
             },
             htif: match &mc.htif {
-                Some(htif_config) => {
-                    interfaces::HTIFConfig::from(htif_config.clone())
-                }
+                Some(htif_config) => interfaces::HTIFConfig::from(htif_config.clone()),
                 None => Default::default(),
             },
             rollup: match &mc.rollup {
@@ -486,9 +483,12 @@ impl From<&interfaces::MachineRuntimeConfig> for MachineRuntimeConfig {
                     .as_ref()
                     .unwrap_or(&interfaces::ConcurrencyConfig::default()),
             ),
-            htif: rc.htif.clone().unwrap_or(interfaces::HTIFRuntimeConfig::default()),
+            htif: rc
+                .htif
+                .clone()
+                .unwrap_or(interfaces::HTIFRuntimeConfig::default()),
             skip_root_hash_check: rc.skip_root_hash_check.unwrap_or(false),
-            skip_version_check: rc.skip_version_check.unwrap_or(false)
+            skip_version_check: rc.skip_version_check.unwrap_or(false),
         }
     }
 }
@@ -582,8 +582,8 @@ impl From<&interfaces::Access> for Access {
                 "\"write\"" => AccessType::Write,
                 _ => AccessType::Read,
             },
-            read_data: base64::decode(read_data).unwrap(),
-            written_data: base64::decode(written_data).unwrap(),
+            read_data: STANDARD.decode(read_data).unwrap(),
+            written_data: STANDARD.decode(written_data).unwrap(),
             proof: match &access.proof {
                 Some(x) => MerkleTreeProof::from(x),
                 None => Default::default(),
@@ -660,22 +660,19 @@ impl From<&interfaces::AccessLog> for AccessLog {
 
 pub struct JsonRpcCartesiMachineClient {
     server_address: String,
-    client: std::sync::Arc<
-        Mutex<interfaces::RemoteCartesiMachine<jsonrpsee::http_client::HttpClient>>,
-    >,
+    client:
+        std::sync::Arc<Mutex<interfaces::RemoteCartesiMachine<jsonrpsee::http_client::HttpClient>>>,
 }
 
 impl JsonRpcCartesiMachineClient {
     /// Create new client instance. Connect to the server as part of client instantiation
     pub async fn new<'a>(server_address: String) -> Result<Self, jsonrpsee::core::error::Error> {
-
         let transport = jsonrpsee::http_client::HttpClientBuilder::default()
             .build(&server_address)
             .unwrap();
 
-        let remote_machine = std::sync::Arc::new(Mutex::new(
-            interfaces::RemoteCartesiMachine::new(transport),
-        ));
+        let remote_machine =
+            std::sync::Arc::new(Mutex::new(interfaces::RemoteCartesiMachine::new(transport)));
         match remote_machine
             .lock()
             .await
@@ -721,8 +718,7 @@ impl JsonRpcCartesiMachineClient {
         machine_config: &MachineConfig,
         machine_runtime_config: &MachineRuntimeConfig,
     ) -> Result<(), Box<jsonrpsee::core::Error>> {
-        let runtime =
-            interfaces::MachineRuntimeConfig::from(machine_runtime_config);
+        let runtime = interfaces::MachineRuntimeConfig::from(machine_runtime_config);
         let machine_oneof = interfaces::MachineConfig::from(machine_config);
         let response = self
             .client
@@ -744,8 +740,7 @@ impl JsonRpcCartesiMachineClient {
         directory: &str,
         machine_runtime_config: &MachineRuntimeConfig,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let runtime =
-            interfaces::MachineRuntimeConfig::from(machine_runtime_config);
+        let runtime = interfaces::MachineRuntimeConfig::from(machine_runtime_config);
         let client = std::sync::Arc::clone(&self.client);
 
         let response = {
@@ -858,7 +853,7 @@ impl JsonRpcCartesiMachineClient {
             response.pop();
         }
 
-        Ok(base64::decode(response).unwrap())
+        Ok(STANDARD.decode(response).unwrap())
     }
 
     /// Writes a chunk of data to the remote machine memory
@@ -897,7 +892,9 @@ impl JsonRpcCartesiMachineClient {
                     hash.pop();
                 }
                 let mut root_hash = [0u8; 32];
-                base64::engine::general_purpose::STANDARD.decode_slice_unchecked(hash.clone(), &mut root_hash as &mut [u8]).unwrap();
+                STANDARD
+                    .decode_slice_unchecked(hash.clone(), &mut root_hash as &mut [u8])
+                    .unwrap();
                 Ok(root_hash)
             }
             Err(_) => Err(Box::new(JsonrpcCartesiMachineError::new(
@@ -1150,8 +1147,8 @@ impl JsonRpcCartesiMachineClient {
         one_based: bool,
         runtime: &MachineRuntimeConfig,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut root_hash_before = base64::encode(root_hash_before.clone());
-        let mut root_hash_after = base64::encode(root_hash_after.clone());
+        let mut root_hash_before = STANDARD.encode(&root_hash_before.clone());
+        let mut root_hash_after = STANDARD.encode(&root_hash_after.clone());
 
         if root_hash_before.ends_with("=") {
             root_hash_before.push('\n');
