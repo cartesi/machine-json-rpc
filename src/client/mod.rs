@@ -171,8 +171,8 @@ impl ProcessorConfig {
 impl From<&interfaces::ProcessorConfig> for ProcessorConfig {
     fn from(config: &interfaces::ProcessorConfig) -> Self {
         ProcessorConfig {
-            x: convert_x_csr_field(config),
-            f: convert_f_csr_field(config),
+            x: convert_x_csr_field(&config.x),
+            f: convert_f_csr_field(&config.f),
             pc: convert_csr_field(config.pc),
             mvendorid: convert_csr_field(config.mvendorid),
             marchid: convert_csr_field(config.marchid),
