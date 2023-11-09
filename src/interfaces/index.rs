@@ -340,6 +340,7 @@ pub struct RemoteCartesiMachine<T> {
     transport: Box<T>,
 }
 
+#[allow(non_snake_case)]
 impl<T: jsonrpsee::core::client::ClientT + Send + Sync> RemoteCartesiMachine<T>
 where
     T: Send + Sync + 'static,

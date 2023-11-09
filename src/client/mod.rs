@@ -9,7 +9,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-//! Implementation of the Rust grpc client for Cartesi emulator machine server
+//! Implementation of the Rust json-rpc client for Cartesi emulator machine server
 
 #![allow(unused_variables, dead_code)]
 
@@ -17,7 +17,6 @@ use std::fmt;
 
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
-use serde::Deserialize;
 
 use crate::interfaces;
 
@@ -432,25 +431,7 @@ impl From<&interfaces::MachineConfig> for MachineConfig {
         }
     }
 }
-impl<'de> Deserialize<'de> for MachineConfig {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let config = serde::Deserialize::deserialize(deserializer)?;
-        Ok(config)
-    }
-}
 
-impl<'de> Deserialize<'de> for MachineRuntimeConfig {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let runtime_config = serde::Deserialize::deserialize(deserializer)?;
-        Ok(runtime_config)
-    }
-}
 #[doc = " Concurrency runtime configuration"]
 #[derive(Debug, Clone, Default)]
 pub struct ConcurrencyConfig {
@@ -669,6 +650,8 @@ impl JsonRpcCartesiMachineClient {
             jsonrpsee::http_client::HttpClientBuilder::default().build(&server_address)?;
 
         let remote_machine = interfaces::RemoteCartesiMachine::new(transport);
+        remote_machine.GetVersion().await?;
+        // somehow CheckConnection won't work
         // remote_machine.CheckConnection().await?;
 
         Ok(JsonRpcCartesiMachineClient {
