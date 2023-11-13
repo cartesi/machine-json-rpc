@@ -9,8 +9,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-use crate::interfaces;
 use crate::client::*;
+use crate::interfaces::{self, FRegConfig, XRegConfig};
 
 impl From<&MachineRuntimeConfig> for interfaces::MachineRuntimeConfig {
     fn from(rc: &MachineRuntimeConfig) -> Self {
@@ -18,9 +18,11 @@ impl From<&MachineRuntimeConfig> for interfaces::MachineRuntimeConfig {
             concurrency: Some(interfaces::ConcurrencyConfig {
                 update_merkle_tree: Some(rc.concurrency.update_merkle_tree),
             }),
-            htif: Some(interfaces::HTIFRuntimeConfig { no_console_putchar: rc.htif.no_console_putchar }),
+            htif: Some(interfaces::HTIFRuntimeConfig {
+                no_console_putchar: rc.htif.no_console_putchar,
+            }),
             skip_root_hash_check: Some(rc.skip_root_hash_check),
-            skip_version_check: Some(rc.skip_version_check)
+            skip_version_check: Some(rc.skip_version_check),
         }
     }
 }
@@ -40,8 +42,8 @@ impl From<&MerkleTreeProof> for interfaces::Proof {
 
 impl From<&Access> for interfaces::Access {
     fn from(access: &Access) -> Self {
-        let mut read = base64::encode(access.read_data.clone());
-        let mut written = base64::encode(access.written_data.clone());
+        let mut read = STANDARD.encode(&access.read_data);
+        let mut written = STANDARD.encode(&access.written_data);
 
         if read.ends_with("=") {
             read.push('\n');
@@ -94,82 +96,41 @@ impl From<&AccessLog> for interfaces::AccessLog {
         };
         interfaces::AccessLog {
             log_type,
-            accesses: log.accesses.iter().map(|e| interfaces::Access::from(e)).collect(),
-            brackets: Some(log.brackets.iter().map(|e| interfaces::Bracket::from(e)).collect()),
+            accesses: log
+                .accesses
+                .iter()
+                .map(|e| interfaces::Access::from(e))
+                .collect(),
+            brackets: Some(
+                log.brackets
+                    .iter()
+                    .map(|e| interfaces::Bracket::from(e))
+                    .collect(),
+            ),
             notes: Some(log.notes.clone()),
         }
     }
 }
 
-pub fn convert_x_csr_field(config: &interfaces::ProcessorConfig) -> [u64; 32usize] {
+pub fn convert_x_csr_field(x: &Option<XRegConfig>) -> [u64; 32usize] {
     let mut result: [u64; 32usize] = [0; 32usize];
-    result[0] = convert_csr_field(Some(config.x.clone().unwrap()[0]));
-    result[1] = convert_csr_field(Some(config.x.clone().unwrap()[1]));
-    result[2] = convert_csr_field(Some(config.x.clone().unwrap()[2]));
-    result[3] = convert_csr_field(Some(config.x.clone().unwrap()[3]));
-    result[4] = convert_csr_field(Some(config.x.clone().unwrap()[4]));
-    result[5] = convert_csr_field(Some(config.x.clone().unwrap()[5]));
-    result[6] = convert_csr_field(Some(config.x.clone().unwrap()[6]));
-    result[7] = convert_csr_field(Some(config.x.clone().unwrap()[7]));
-    result[8] = convert_csr_field(Some(config.x.clone().unwrap()[8]));
-    result[9] = convert_csr_field(Some(config.x.clone().unwrap()[9]));
-    result[10] = convert_csr_field(Some(config.x.clone().unwrap()[10]));
-    result[11] = convert_csr_field(Some(config.x.clone().unwrap()[11]));
-    result[12] = convert_csr_field(Some(config.x.clone().unwrap()[12]));
-    result[13] = convert_csr_field(Some(config.x.clone().unwrap()[13]));
-    result[14] = convert_csr_field(Some(config.x.clone().unwrap()[14]));
-    result[15] = convert_csr_field(Some(config.x.clone().unwrap()[15]));
-    result[16] = convert_csr_field(Some(config.x.clone().unwrap()[16]));
-    result[17] = convert_csr_field(Some(config.x.clone().unwrap()[17]));
-    result[18] = convert_csr_field(Some(config.x.clone().unwrap()[18]));
-    result[19] = convert_csr_field(Some(config.x.clone().unwrap()[19]));
-    result[20] = convert_csr_field(Some(config.x.clone().unwrap()[20]));
-    result[21] = convert_csr_field(Some(config.x.clone().unwrap()[21]));
-    result[22] = convert_csr_field(Some(config.x.clone().unwrap()[22]));
-    result[23] = convert_csr_field(Some(config.x.clone().unwrap()[23]));
-    result[24] = convert_csr_field(Some(config.x.clone().unwrap()[24]));
-    result[25] = convert_csr_field(Some(config.x.clone().unwrap()[25]));
-    result[26] = convert_csr_field(Some(config.x.clone().unwrap()[26]));
-    result[27] = convert_csr_field(Some(config.x.clone().unwrap()[27]));
-    result[28] = convert_csr_field(Some(config.x.clone().unwrap()[28]));
-    result[29] = convert_csr_field(Some(config.x.clone().unwrap()[29]));
-    result[30] = convert_csr_field(Some(config.x.clone().unwrap()[30]));
+    if let Some(x_reg) = x {
+        result
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, v)| *v = x_reg[i])
+    }
     result
 }
 
-pub fn convert_f_csr_field(config: &interfaces::ProcessorConfig) -> [u64; 32usize] {
+pub fn convert_f_csr_field(f: &Option<FRegConfig>) -> [u64; 32usize] {
     let mut result: [u64; 32usize] = [0; 32usize];
-    result[0] = convert_csr_field(Some(config.f.clone().unwrap()[0]));
-    result[1] = convert_csr_field(Some(config.f.clone().unwrap()[1]));
-    result[2] = convert_csr_field(Some(config.f.clone().unwrap()[2]));
-    result[3] = convert_csr_field(Some(config.f.clone().unwrap()[3]));
-    result[4] = convert_csr_field(Some(config.f.clone().unwrap()[4]));
-    result[5] = convert_csr_field(Some(config.f.clone().unwrap()[5]));
-    result[6] = convert_csr_field(Some(config.f.clone().unwrap()[6]));
-    result[7] = convert_csr_field(Some(config.f.clone().unwrap()[7]));
-    result[8] = convert_csr_field(Some(config.f.clone().unwrap()[8]));
-    result[9] = convert_csr_field(Some(config.f.clone().unwrap()[9]));
-    result[10] = convert_csr_field(Some(config.f.clone().unwrap()[10]));
-    result[11] = convert_csr_field(Some(config.f.clone().unwrap()[11]));
-    result[12] = convert_csr_field(Some(config.f.clone().unwrap()[12]));
-    result[13] = convert_csr_field(Some(config.f.clone().unwrap()[13]));
-    result[14] = convert_csr_field(Some(config.f.clone().unwrap()[14]));
-    result[15] = convert_csr_field(Some(config.f.clone().unwrap()[15]));
-    result[16] = convert_csr_field(Some(config.f.clone().unwrap()[16]));
-    result[17] = convert_csr_field(Some(config.f.clone().unwrap()[17]));
-    result[18] = convert_csr_field(Some(config.f.clone().unwrap()[18]));
-    result[19] = convert_csr_field(Some(config.f.clone().unwrap()[19]));
-    result[20] = convert_csr_field(Some(config.f.clone().unwrap()[20]));
-    result[21] = convert_csr_field(Some(config.f.clone().unwrap()[21]));
-    result[22] = convert_csr_field(Some(config.f.clone().unwrap()[22]));
-    result[23] = convert_csr_field(Some(config.f.clone().unwrap()[23]));
-    result[24] = convert_csr_field(Some(config.f.clone().unwrap()[24]));
-    result[25] = convert_csr_field(Some(config.f.clone().unwrap()[25]));
-    result[26] = convert_csr_field(Some(config.f.clone().unwrap()[26]));
-    result[27] = convert_csr_field(Some(config.f.clone().unwrap()[27]));
-    result[28] = convert_csr_field(Some(config.f.clone().unwrap()[28]));
-    result[29] = convert_csr_field(Some(config.f.clone().unwrap()[29]));
-    result[30] = convert_csr_field(Some(config.f.clone().unwrap()[30]));
+    if let Some(f_reg) = f {
+        result
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, v)| *v = f_reg[i])
+    }
     result
 }
 
