@@ -18,13 +18,13 @@ use rstest::*;
 use std::future::Future;
 
 static INITIAL_ROOT_HASH: [u8; 32] = [
-    131, 99, 230, 222, 130, 27, 210, 194, 165, 9, 76, 229, 231, 218, 75, 231, 151, 47, 191, 153,
-    22, 84, 94, 122, 127, 184, 180, 51, 152, 100, 117, 189,
+    178, 185, 63, 105, 105, 131, 124, 22, 104, 140, 211, 71, 214, 178, 210, 140, 138, 150, 246, 15,
+    85, 65, 249, 68, 185, 118, 148, 246, 52, 45, 161, 249,
 ];
 
 static SECOND_STEP_HASH: [u8; 32] = [
-    234, 235, 196, 19, 105, 77, 70, 208, 245, 14, 10, 142, 22, 194, 160, 55, 13, 172, 207, 44, 129,
-    97, 163, 39, 181, 15, 45, 0, 24, 214, 194, 148,
+    147, 222, 230, 7, 244, 135, 102, 190, 169, 98, 108, 155, 200, 212, 228, 151, 57, 227, 145, 239,
+    134, 195, 184, 149, 206, 26, 29, 81, 127, 11, 29, 192,
 ];
 
 #[allow(dead_code)]
@@ -43,7 +43,10 @@ fn generate_random_name() -> String {
         .collect()
 }
 
-fn instantiate_external_server_instance(port: u32) -> Result<(), Box<dyn std::error::Error>> {
+fn instantiate_external_server_instance(
+    name: &str,
+    port: u32,
+) -> Result<(), Box<dyn std::error::Error>> {
     let address = format!("127.0.0.1:{0}", port);
     let server_address = format!("--server-address=127.0.0.1:{0}", port);
 
@@ -51,10 +54,14 @@ fn instantiate_external_server_instance(port: u32) -> Result<(), Box<dyn std::er
         "Starting Cartesi jsonrpc remote machine on address {}",
         address
     );
-    match std::process::Command::new("/opt/cartesi/bin/jsonrpc-remote-cartesi-machine")
+    match std::process::Command::new("/bin/bash")
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
-        .arg(server_address)
+        .arg("-c")
+        .arg(format!(
+            "exec -a {} /usr/bin/jsonrpc-remote-cartesi-machine {}",
+            name, server_address
+        ))
         .spawn()
     {
         Ok(_child) => {}
@@ -64,10 +71,10 @@ fn instantiate_external_server_instance(port: u32) -> Result<(), Box<dyn std::er
     Ok(())
 }
 
-fn try_stop_container() {
+fn try_stop_container(name: &str) {
     let result = std::process::Command::new("pkill")
         .arg("-f")
-        .arg("/usr/bin/jsonrpc-remote-cartesi-machine")
+        .arg(format!("{}", name))
         .status()
         .unwrap();
     if !result.success() {
@@ -84,7 +91,7 @@ impl Context {
 impl Drop for Context {
     fn drop(&mut self) {
         println!("Destroying container {}", &self.container_name);
-        try_stop_container();
+        try_stop_container(&self.container_name);
     }
 }
 
@@ -99,7 +106,7 @@ mod local_server {
         let uri = format!("http://{}:{}", server_ip, port);
         let container_name = generate_random_name();
 
-        match instantiate_external_server_instance(port) {
+        match instantiate_external_server_instance(&container_name, port) {
             Ok(_) => (),
             Err(ex) => eprint!(
                 "Error instantiating cartesi machine server {}",
@@ -130,7 +137,7 @@ mod local_server {
         let port: u32 = rand::thread_rng().gen_range(49152..65535);
         let uri = format!("http://{}:{}", server_ip, port);
         let container_name = generate_random_name();
-        match instantiate_external_server_instance(port) {
+        match instantiate_external_server_instance(&container_name, port) {
             Ok(_) => (),
             Err(err) => eprint!(
                 "Error instantiating jsonrpc cartesi machine server {}",
@@ -177,8 +184,10 @@ mod local_server {
                 cycle: Some(0),
             }),
             ram: Some(interfaces::UarchRAMConfig {
-                length: Some(77128),
-                image_filename: Some(String::from("/opt/cartesi/share/images/uarch-ram.bin")),
+                length: Some(77176),
+                image_filename: Some(String::from(
+                    "/usr/share/cartesi-machine/uarch/uarch-ram.bin",
+                )),
             }),
         };
         default_config.htif = interfaces::HTIFConfig {
@@ -239,7 +248,7 @@ mod local_server {
         let port: u32 = rand::thread_rng().gen_range(49152..65535);
         let uri = format!("http://{}:{}", server_ip, port);
         let container_name = generate_random_name();
-        match instantiate_external_server_instance(port) {
+        match instantiate_external_server_instance(&container_name, port) {
             Ok(_) => (),
             Err(err) => eprint!(
                 "Error instantiating jsonrpc cartesi machine server {}",
@@ -400,7 +409,7 @@ mod local_server {
             SemanticVersion {
                 major: 0,
                 minor: 1,
-                patch: 0,
+                patch: 1,
                 pre_release: "".to_string(),
                 build: "".to_string()
             }
@@ -512,8 +521,10 @@ mod local_server {
                 cycle: Some(0),
             }),
             ram: Some(interfaces::UarchRAMConfig {
-                length: Some(77128),
-                image_filename: Some(String::from("/opt/cartesi/share/images/uarch-ram.bin")),
+                length: Some(77176),
+                image_filename: Some(String::from(
+                    "/usr/share/cartesi-machine/uarch/uarch-ram.bin",
+                )),
             }),
         };
         default_config.htif = interfaces::HTIFConfig {
@@ -765,8 +776,8 @@ mod local_server {
         assert_eq!(
             STANDARD.decode(target_hash_string).unwrap(),
             [
-                223, 29, 35, 135, 156, 152, 209, 63, 32, 122, 132, 124, 77, 235, 34, 199, 91, 205,
-                122, 232, 228, 246, 6, 38, 50, 162, 247, 189, 99, 218, 125, 54
+                35, 254, 2, 79, 37, 221, 81, 35, 248, 37, 161, 169, 94, 207, 252, 232, 112, 88,
+                158, 205, 25, 69, 157, 16, 32, 131, 238, 33, 140, 15, 0, 174
             ]
         );
         assert_eq!(proof.sibling_hashes.len(), 54);
@@ -1034,8 +1045,10 @@ mod local_server {
                 cycle: Some(0),
             }),
             ram: Some(interfaces::UarchRAMConfig {
-                length: Some(77128),
-                image_filename: Some(String::from("/opt/cartesi/share/images/uarch-ram.bin")),
+                length: Some(77176),
+                image_filename: Some(String::from(
+                    "/usr/share/cartesi-machine/uarch/uarch-ram.bin",
+                )),
             }),
         };
 
