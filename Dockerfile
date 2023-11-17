@@ -18,12 +18,19 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release --test cartesi_machine_client_tests
 
-FROM --platform=linux/amd64 cartesi/playground:0.6.0
+FROM --platform=linux/amd64 cartesi/machine-emulator:0.15.2
+
 USER root
+RUN apt-get update && \
+    apt-get install -y procps wget
+
+COPY --from=cartesi/linux-kernel:0.17.0 /opt/riscv/kernel/artifacts/linux-5.15.63-ctsi-2-v0.17.0.bin /opt/cartesi/share/images/linux.bin
+COPY --from=cartesi/rootfs:0.18.0 /opt/riscv/rootfs/artifacts/rootfs.ext2 /opt/cartesi/share/images/
+RUN \
+    wget -O /opt/cartesi/share/images/rom.bin https://github.com/cartesi/machine-emulator-rom/releases/download/v0.17.0/rom-v0.17.0.bin
 
 COPY --from=builder /app/target/release/ /root/target/release/
 COPY ./ /root
 WORKDIR /root
 
-# CMD "/root/entrypoint.sh"
 ENTRYPOINT [ "/root/entrypoint.sh" ]
