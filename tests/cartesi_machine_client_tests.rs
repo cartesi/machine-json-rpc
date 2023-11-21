@@ -574,7 +574,7 @@ mod local_server {
             Ok(_) => panic!("Creating existing machine should fail"),
             Err(err) => assert_eq!(
                 err.to_string(),
-                "Jsonrpc cartesi machine error: Could not create new machine: ErrorObject { code: InvalidRequest, message: \"machine exists\", data: None }"
+                "ErrorObject { code: InvalidRequest, message: \"machine exists\", data: None }"
             ),
         }
         Ok(())

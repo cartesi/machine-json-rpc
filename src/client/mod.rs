@@ -13,36 +13,14 @@
 
 #![allow(unused_variables, dead_code)]
 
-use std::fmt;
-
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+pub use jsonrpsee::core::Error;
 
 use crate::interfaces;
 
 mod conversions;
 use conversions::*;
-
-#[derive(Debug, Default)]
-pub struct JsonrpcCartesiMachineError {
-    message: String,
-}
-
-impl JsonrpcCartesiMachineError {
-    fn new(message: &str) -> Self {
-        JsonrpcCartesiMachineError {
-            message: String::from(message),
-        }
-    }
-}
-
-impl fmt::Display for JsonrpcCartesiMachineError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Jsonrpc cartesi machine error: {}", &self.message)
-    }
-}
-
-impl std::error::Error for JsonrpcCartesiMachineError {}
 
 #[doc = " Server version"]
 #[derive(Debug, Clone, Default)]
@@ -645,14 +623,14 @@ pub struct JsonRpcCartesiMachineClient {
 
 impl JsonRpcCartesiMachineClient {
     /// Create new client instance. Connect to the server as part of client instantiation
-    pub async fn new<'a>(server_address: String) -> Result<Self, jsonrpsee::core::error::Error> {
+    pub async fn new<'a>(server_address: String) -> Result<Self, Error> {
         let transport =
             jsonrpsee::http_client::HttpClientBuilder::default().build(&server_address)?;
 
         let remote_machine = interfaces::RemoteCartesiMachine::new(transport);
         remote_machine.GetVersion().await?;
         // somehow CheckConnection won't work
-        // remote_machine.CheckConnection().await?;
+        // remote_machine.CheckConnection().await
 
         Ok(JsonRpcCartesiMachineClient {
             server_address,
@@ -666,19 +644,11 @@ impl JsonRpcCartesiMachineClient {
     }
 
     /// Get Cartesi machine server version
-    pub async fn get_version(&self) -> Result<SemanticVersion, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
+    pub async fn get_version(&self) -> Result<SemanticVersion, Error> {
+        self.client
             .GetVersion()
             .await
             .map(|res| SemanticVersion::from(&res))
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not retrieve semantic version: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
     }
 
     // /// Create machine instance on remote Cartesi machine server
@@ -686,20 +656,12 @@ impl JsonRpcCartesiMachineClient {
         &self,
         machine_config: &MachineConfig,
         machine_runtime_config: &MachineRuntimeConfig,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
+    ) -> Result<bool, Error> {
         let runtime = interfaces::MachineRuntimeConfig::from(machine_runtime_config);
         let machine_oneof = interfaces::MachineConfig::from(machine_config);
-        let response = self
-            .client
+        self.client
             .MachineMachineConfig(machine_oneof, runtime)
             .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not create new machine: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
     }
 
     /// Create machine from storage on remote Cartesi machine server
@@ -707,88 +669,41 @@ impl JsonRpcCartesiMachineClient {
         &self,
         directory: &str,
         machine_runtime_config: &MachineRuntimeConfig,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
+    ) -> Result<bool, Error> {
         let runtime = interfaces::MachineRuntimeConfig::from(machine_runtime_config);
-
-        let response = self
-            .client
+        self.client
             .MachineMachineDirectory(directory.to_string(), runtime)
             .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not load machine: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
     }
 
     /// Run remote machine to maximum limit cycle
-    pub async fn run(&self, limit: u64) -> Result<serde_json::Value, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineRun(limit).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not run machine: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn run(&self, limit: u64) -> Result<serde_json::Value, Error> {
+        self.client.MachineRun(limit).await
     }
 
     /// Run uarch remote machine to maximum limit cycle
-    pub async fn run_uarch(
-        &self,
-        limit: u64,
-    ) -> Result<serde_json::Value, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineRunUarch(limit).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not run uarch machine: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn run_uarch(&self, limit: u64) -> Result<serde_json::Value, Error> {
+        self.client.MachineRunUarch(limit).await
     }
 
     /// Serialize entire remote machine state to directory on cartesi machine server host
-    pub async fn store(&self, directory: &str) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
-            .MachineStore(directory.to_string())
-            .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not store machine: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
+    pub async fn store(&self, directory: &str) -> Result<bool, Error> {
+        self.client.MachineStore(directory.to_string()).await
     }
 
     /// Destroy remote machine instance
-    pub async fn destroy(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineDestroy().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not destroy machine: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn destroy(&self) -> Result<bool, Error> {
+        self.client.MachineDestroy().await
     }
 
     /// Fork remote machine
-    pub async fn fork(&self) -> Result<String, JsonrpcCartesiMachineError> {
-        let response = self.client.Fork().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not fork machine: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn fork(&self) -> Result<String, Error> {
+        self.client.Fork().await
     }
 
     /// Shutdown the server
-    pub async fn shutdown(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.Shutdown().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not shutdown machine: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn shutdown(&self) -> Result<bool, Error> {
+        self.client.Shutdown().await
     }
 
     /// Runs the remote machine for one cycle logging all accesses to the state
@@ -796,40 +711,20 @@ impl JsonRpcCartesiMachineClient {
         &self,
         log_type: &AccessLogType,
         one_based: bool,
-    ) -> Result<AccessLog, JsonrpcCartesiMachineError> {
+    ) -> Result<AccessLog, Error> {
         let log_type = interfaces::AccessLogType {
             has_proofs: log_type.proofs,
             has_annotations: log_type.annotations,
         };
-        let response = self
-            .client
+        self.client
             .MachineStepUarch(log_type, one_based)
             .await
             .map(|op| AccessLog::from(&op))
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not step machine: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
     }
 
     /// Reads a chunk of data from the remote machine memory
-    pub async fn read_memory(
-        &self,
-        address: u64,
-        length: u64,
-    ) -> Result<Vec<u8>, JsonrpcCartesiMachineError> {
-        let mut response = self
-            .client
-            .MachineReadMemory(address, length)
-            .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not read memory: {}", e.to_string()).as_str(),
-                )
-            })?;
+    pub async fn read_memory(&self, address: u64, length: u64) -> Result<Vec<u8>, Error> {
+        let mut response = self.client.MachineReadMemory(address, length).await?;
 
         if response.ends_with('\n') {
             response.pop();
@@ -839,281 +734,131 @@ impl JsonRpcCartesiMachineClient {
     }
 
     /// Writes a chunk of data to the remote machine memory
-    pub async fn write_memory(
-        &self,
-        address: u64,
-        data: String,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
-            .MachineWriteMemory(address, data)
-            .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not write memory: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
+    pub async fn write_memory(&self, address: u64, data: String) -> Result<bool, Error> {
+        self.client.MachineWriteMemory(address, data).await
     }
 
     /// Read the value of a word in the remote machine state
-    pub async fn read_word(&self, address: u64) -> Result<u64, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineReadWord(address).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not read word: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn read_word(&self, address: u64) -> Result<u64, Error> {
+        self.client.MachineReadWord(address).await
     }
 
     /// Obtains the root hash of the Merkle tree for the remote machine
-    pub async fn get_root_hash(&self) -> Result<[u8; 32], JsonrpcCartesiMachineError> {
-        let response = self
-            .client
-            .MachineGetRootHash()
-            .await
-            .map(|op| {
-                let mut hash = op;
-                if hash.ends_with('\n') {
-                    hash.pop();
-                }
-                let mut root_hash = [0u8; 32];
-                STANDARD
-                    .decode_slice_unchecked(hash.clone(), &mut root_hash as &mut [u8])
-                    .unwrap();
-                root_hash
-            })
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not get root hash: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
+    pub async fn get_root_hash(&self) -> Result<[u8; 32], Error> {
+        self.client.MachineGetRootHash().await.map(|op| {
+            let mut hash = op;
+            if hash.ends_with('\n') {
+                hash.pop();
+            }
+            let mut root_hash = [0u8; 32];
+            STANDARD
+                .decode_slice_unchecked(hash.clone(), &mut root_hash as &mut [u8])
+                .unwrap();
+            root_hash
+        })
     }
 
     /// Obtains the proof for a node in the Merkle tree from remote machine
-    pub async fn get_proof(
-        &self,
-        address: u64,
-        log2_size: u64,
-    ) -> Result<MerkleTreeProof, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
+    pub async fn get_proof(&self, address: u64, log2_size: u64) -> Result<MerkleTreeProof, Error> {
+        self.client
             .MachineGetProof(address, log2_size)
             .await
             .map(|op| MerkleTreeProof::from(&op))
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not get proof: {}", e.to_string()).as_str(),
-                )
-            })?;
-
-        Ok(response)
     }
 
     /// Replaces a flash drive on a remote machine
     pub async fn replace_memory_range(
         &self,
         config: interfaces::MemoryRangeConfig,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
-            .MachineReplaceMemoryRange(config)
-            .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not replace memory range: {}", e.to_string()).as_str(),
-                )
-            })?;
-        Ok(response)
+    ) -> Result<bool, Error> {
+        self.client.MachineReplaceMemoryRange(config).await
     }
 
     /// Gets the address of a general-purpose register
-    pub async fn get_x_address(&self, index: u64) -> Result<u64, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineGetXAddress(index).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not get x address: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn get_x_address(&self, index: u64) -> Result<u64, Error> {
+        self.client.MachineGetXAddress(index).await
     }
 
     /// Reads the value of a general-purpose register from the remote machine
-    pub async fn read_x(&self, index: u64) -> Result<u64, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineReadX(index).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(format!("Could not read x: {}", e.to_string()).as_str())
-        })?;
-        Ok(response)
+    pub async fn read_x(&self, index: u64) -> Result<u64, Error> {
+        self.client.MachineReadX(index).await
     }
 
-    pub async fn read_iflags_h(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineReadIflagsH().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not read iflagsH: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn read_iflags_h(&self) -> Result<bool, Error> {
+        self.client.MachineReadIflagsH().await
     }
 
-    pub async fn read_iflags_x(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineReadIflagsX().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not read iflagsX: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn read_iflags_x(&self) -> Result<bool, Error> {
+        self.client.MachineReadIflagsX().await
     }
 
-    pub async fn read_iflags_y(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineReadIflagsY().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not read iflagsY: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn read_iflags_y(&self) -> Result<bool, Error> {
+        self.client.MachineReadIflagsY().await
     }
 
-    pub async fn read_uarch_halt_flag(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineReadUarchHaltFlag().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not read uarch halt: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn read_uarch_halt_flag(&self) -> Result<bool, Error> {
+        self.client.MachineReadUarchHaltFlag().await
     }
 
     /// Writes the value of a general-purpose register for the remote machine
-    pub async fn write_x(
-        &self,
-        index: u64,
-        value: u64,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineWriteX(index, value).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not write x: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn write_x(&self, index: u64, value: u64) -> Result<bool, Error> {
+        self.client.MachineWriteX(index, value).await
     }
 
     /// Resets the value of the iflags_Y flag on the remote machine
-    pub async fn reset_iflags_y(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineResetIflagsY().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not reset iflagsY: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn reset_iflags_y(&self) -> Result<bool, Error> {
+        self.client.MachineResetIflagsY().await
     }
 
     /// Resets uarch state on the remote machine
-    pub async fn reset_uarch_state(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineResetUarchState().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not reset uarch state: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn reset_uarch_state(&self) -> Result<bool, Error> {
+        self.client.MachineResetUarchState().await
     }
 
     /// Gets the address of any CSR
-    pub async fn get_csr_address(&self, csr: String) -> Result<u64, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineGetCsrAddress(csr).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not get csr address: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn get_csr_address(&self, csr: String) -> Result<u64, Error> {
+        self.client.MachineGetCsrAddress(csr).await
     }
 
     /// Read the value of any CSR from remote machine
-    pub async fn read_csr(&self, csr: String) -> Result<u64, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineReadCsr(csr).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not read csr: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn read_csr(&self, csr: String) -> Result<u64, Error> {
+        self.client.MachineReadCsr(csr).await
     }
 
     /// Writes the value of any CSR on remote machine
-    pub async fn write_csr(
-        &self,
-        csr: String,
-        value: u64,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineWriteCsr(csr, value).await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not write csr: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn write_csr(&self, csr: String, value: u64) -> Result<bool, Error> {
+        self.client.MachineWriteCsr(csr, value).await
     }
 
     /// Returns copy of initialization config of the remote machine
-    pub async fn get_initial_config(&self) -> Result<MachineConfig, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
+    pub async fn get_initial_config(&self) -> Result<MachineConfig, Error> {
+        self.client
             .MachineGetInitialConfig()
             .await
             .map(|op| MachineConfig::from(&op))
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not get initial config: {}", e.to_string()).as_str(),
-                )
-            })?;
-        Ok(response)
     }
 
     /// Verifies integrity of Merkle tree on the remote machine
-    pub async fn verify_merkle_tree(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineVerifyMerkleTree().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not verify merkle: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn verify_merkle_tree(&self) -> Result<bool, Error> {
+        self.client.MachineVerifyMerkleTree().await
     }
 
     /// Verify if dirty page maps are consistent on the remote machine
-    pub async fn verify_dirty_page_maps(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
-            .MachineVerifyDirtyPageMaps()
-            .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not verify dirty page: {}", e.to_string()).as_str(),
-                )
-            })?;
-        Ok(response)
+    pub async fn verify_dirty_page_maps(&self) -> Result<bool, Error> {
+        self.client.MachineVerifyDirtyPageMaps().await
     }
 
     /// Dump all memory ranges to files in current working directory on the server (for debugging purporses)
-    pub async fn dump_pmas(&self) -> Result<bool, JsonrpcCartesiMachineError> {
-        let response = self.client.MachineDumpPmas().await.map_err(|e| {
-            JsonrpcCartesiMachineError::new(
-                format!("Could not dump pma: {}", e.to_string()).as_str(),
-            )
-        })?;
-        Ok(response)
+    pub async fn dump_pmas(&self) -> Result<bool, Error> {
+        self.client.MachineDumpPmas().await
     }
 
     /// Returns copy of default system config from remote Cartesi machine server
-    pub async fn get_default_config(&self) -> Result<MachineConfig, JsonrpcCartesiMachineError> {
-        let response = self
-            .client
+    pub async fn get_default_config(&self) -> Result<MachineConfig, Error> {
+        self.client
             .MachineGetDefaultConfig()
             .await
             .map(|op| MachineConfig::from(&op))
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not get default config: {}", e.to_string()).as_str(),
-                )
-            })?;
-        Ok(response)
     }
 
     /// Checks the internal consistency of an access log
@@ -1122,20 +867,13 @@ impl JsonRpcCartesiMachineClient {
         log: &AccessLog,
         runtime: &MachineRuntimeConfig,
         one_based: bool,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
+    ) -> Result<bool, Error> {
         let log = interfaces::AccessLog::from(log);
         let runtime = interfaces::MachineRuntimeConfig::from(runtime);
 
-        let response = self
-            .client
+        self.client
             .MachineVerifyAccessLog(log, runtime, one_based)
             .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not verify access log: {}", e.to_string()).as_str(),
-                )
-            })?;
-        Ok(response)
     }
 
     /// Checks the validity of a state transition
@@ -1146,7 +884,7 @@ impl JsonRpcCartesiMachineClient {
         root_hash_after: Vec<u8>,
         one_based: bool,
         runtime: &MachineRuntimeConfig,
-    ) -> Result<bool, JsonrpcCartesiMachineError> {
+    ) -> Result<bool, Error> {
         let mut root_hash_before = STANDARD.encode(&root_hash_before.clone());
         let mut root_hash_after = STANDARD.encode(&root_hash_after.clone());
 
@@ -1159,8 +897,7 @@ impl JsonRpcCartesiMachineClient {
         let log = interfaces::AccessLog::from(log);
         let runtime = interfaces::MachineRuntimeConfig::from(runtime);
 
-        let response = self
-            .client
+        self.client
             .MachineVerifyStateTransition(
                 root_hash_before,
                 log,
@@ -1169,11 +906,5 @@ impl JsonRpcCartesiMachineClient {
                 one_based,
             )
             .await
-            .map_err(|e| {
-                JsonrpcCartesiMachineError::new(
-                    format!("Could not verify state transition: {}", e.to_string()).as_str(),
-                )
-            })?;
-        Ok(response)
     }
 }
