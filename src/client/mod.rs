@@ -724,11 +724,9 @@ impl JsonRpcCartesiMachineClient {
 
     /// Reads a chunk of data from the remote machine memory
     pub async fn read_memory(&self, address: u64, length: u64) -> Result<Vec<u8>, Error> {
-        let mut response = self.client.MachineReadMemory(address, length).await?;
+        let response = self.client.MachineReadMemory(address, length).await?;
 
-        if response.ends_with('\n') {
-            response.pop();
-        }
+        let response = response.replace("\n", "");
 
         Ok(STANDARD.decode(response).unwrap())
     }
