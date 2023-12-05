@@ -625,7 +625,7 @@ impl JsonRpcCartesiMachineClient {
     /// Create new client instance. Connect to the server as part of client instantiation
     pub async fn new<'a>(server_address: String) -> Result<Self, Error> {
         let transport =
-            jsonrpsee::http_client::HttpClientBuilder::default().build(&server_address)?;
+            jsonrpsee::http_client::HttpClientBuilder::default().request_timeout(core::time::Duration::MAX).build(&server_address)?;
 
         let remote_machine = interfaces::RemoteCartesiMachine::new(transport);
         remote_machine.GetVersion().await?;
