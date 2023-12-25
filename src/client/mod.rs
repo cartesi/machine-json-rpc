@@ -17,7 +17,7 @@ use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 pub use jsonrpsee::core::Error;
 
-use crate::interfaces;
+use crate::interfaces::{self, Base64Hash};
 
 mod conversions;
 use conversions::*;
@@ -459,10 +459,10 @@ impl From<&interfaces::MachineRuntimeConfig> for MachineRuntimeConfig {
 pub struct MerkleTreeProof {
     pub target_address: u64,
     pub log2_target_size: usize,
-    pub target_hash: String,
+    pub target_hash: Base64Hash,
     pub log2_root_size: usize,
-    pub root_hash: String,
-    pub sibling_hashes: Vec<String>,
+    pub root_hash: Base64Hash,
+    pub sibling_hashes: Vec<Base64Hash>,
 }
 
 impl From<&interfaces::Proof> for MerkleTreeProof {
@@ -624,8 +624,9 @@ pub struct JsonRpcCartesiMachineClient {
 impl JsonRpcCartesiMachineClient {
     /// Create new client instance. Connect to the server as part of client instantiation
     pub async fn new<'a>(server_address: String) -> Result<Self, Error> {
-        let transport =
-            jsonrpsee::http_client::HttpClientBuilder::default().request_timeout(core::time::Duration::MAX).build(&server_address)?;
+        let transport = jsonrpsee::http_client::HttpClientBuilder::default()
+            .request_timeout(core::time::Duration::MAX)
+            .build(&server_address)?;
 
         let remote_machine = interfaces::RemoteCartesiMachine::new(transport);
         remote_machine.GetVersion().await?;
